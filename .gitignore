@@ -1,0 +1,26 @@
+# Python cache and tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local application data
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Generated exports
+expenses_*.csv
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
