@@ -1,80 +1,87 @@
 # Python Expense Tracker
 
-Python Expense Tracker is a reliable, offline, terminal-based application for recording and understanding personal spending in Pakistani Rupees (PKR). Data is saved locally in SQLite and remains available between runs.
+A Python expense tracker with a Streamlit dashboard and an independent terminal application. Track income and expenses in Pakistani rupees (PKR), review spending, and export records. Monetary amounts are stored as integer paisa for accurate totals.
+
+**Live demo:** [Add your Streamlit Community Cloud URL here](https://share.streamlit.io/)
 
 ## Features
 
-- Add expenses with an amount, category, description, and date
-- Built-in categories plus custom categories
-- View expenses in date order with a combined total
-- Edit or delete records by their unique ID
-- Review monthly totals, transaction counts, and spending by category
-- View an all-time category summary
-- Search descriptions and filter by category or date range
-- Export all records to an Excel-compatible CSV file
-- Friendly input validation and error messages
-- Accurate monetary calculations using integer paisa rather than floating point
+- Dashboard with income, expenses, balance, monthly spending, category breakdown, and recent transactions
+- Interactive spending charts and a responsive sidebar interface
+- Add, edit, and delete income and expenses with dates, categories, and descriptions
+- Filter transaction history by date, category, and type; download filtered CSV data
+- Existing terminal application remains available for expense management and reports
+- Isolated fictional demo data for each web visitor by default
 
-## Technologies
+## Technology stack
 
-- Python 3
-- SQLite through Python's built-in `sqlite3` module
-- Standard-library `csv`, `decimal`, and `unittest` modules
-- No third-party packages, online services, or APIs
+Python 3.10+, Streamlit, and SQLite through Python's standard `sqlite3` module. The application uses Python's `decimal`, `csv`, and `unittest` modules. Streamlit provides the charts; no separate charting package is required.
 
 ## Installation
 
-1. Install Python 3.10 or newer from [python.org](https://www.python.org/downloads/).
-2. Open this project folder in Visual Studio Code.
-3. Open **Terminal > New Terminal**.
-4. Check that Python is available:
+```bash
+python -m venv .venv
+python -m pip install -r requirements.txt
+```
 
-   ```powershell
-   python --version
-   ```
+Activate the virtual environment using the command appropriate for your shell before installing if preferred. The terminal application itself needs only Python's standard library.
 
-No package installation is required.
+## Run locally
 
-## Usage
+Start the web app in demo mode:
 
-From the project folder in the VS Code terminal, run:
+```bash
+streamlit run streamlit_app.py
+```
+
+Demo mode uses a separate in-memory SQLite database for each Streamlit session. It starts with fictional examples and never opens `expense_tracker.db`. Changes may disappear when the session ends or the app restarts. Do not enter real financial information in a public demo.
+
+For private local use with persistent SQLite storage, set `EXPENSE_TRACKER_MODE=local` before starting Streamlit. In PowerShell:
 
 ```powershell
+$env:EXPENSE_TRACKER_MODE = "local"
+streamlit run streamlit_app.py
+```
+
+Local mode uses `expense_tracker.db` in the repository directory. The schema adds an `incomes` table while retaining existing expense tables and records. Keep local mode private: it is a single shared database and has no user authentication.
+
+The existing terminal application still runs independently:
+
+```bash
 python main.py
 ```
 
-Choose an option from the numbered menu and follow the prompts. Dates use `YYYY-MM-DD`. Press Enter at the add-expense date prompt to use today's date. A custom category can be created simply by typing its name.
+The terminal interface continues to manage expenses in the same local SQLite database.
 
-The database is created automatically as `expense_tracker.db` in the project folder. Existing records are retained whenever the program is restarted.
+## Deploy to Streamlit Community Cloud
 
-## Testing
+1. Review the repository and confirm that no private SQLite files or exports are tracked in Git. The `.gitignore` excludes local databases and generated exports.
+2. Publish the source repository to GitHub.
+3. In Streamlit Community Cloud, create an app from that repository and select **`streamlit_app.py`** as the main file.
+4. Leave `EXPENSE_TRACKER_MODE` unset so the public app starts in demo mode.
+5. Add the deployed URL to the live demo link above.
 
-Run the complete test suite from the project folder:
+Community Cloud's local filesystem is not guaranteed to persist across restarts or redeployments. The public demo therefore uses session-isolated in-memory SQLite storage. It does not offer durable financial storage, accounts, or cross-device sync. Do not deploy a shared writable SQLite file containing real records.
 
-```powershell
+## Screenshots
+
+- Dashboard screenshot: _add after publishing_
+- Transaction history screenshot: _add after publishing_
+
+## Tests
+
+```bash
 python -m unittest discover -s tests -v
 ```
 
-Tests use temporary databases and never access the real application database.
+Tests use temporary files and in-memory databases. They do not access the local application database.
 
-## Project Structure
+## Project files
 
-```text
-python-expense-tracker/
-├── main.py                       # Interactive terminal menu
-├── expense_tracker.py            # Validation and application logic
-├── database.py                   # SQLite schema and persistence
-├── tests/
-│   ├── __init__.py
-│   └── test_expense_tracker.py   # Automated tests
-├── README.md
-└── .gitignore
-```
-
-## Future Enhancements
-
-- Optional budgets and overspending alerts
-- Recurring expense templates
-- Additional report formats
-- Database backup and restore commands
-- A desktop interface while preserving the offline design
+| File | Purpose |
+| --- | --- |
+| `streamlit_app.py` | Web entry point and session-isolated demo |
+| `main.py` | Existing terminal interface |
+| `expense_tracker.py` | Validation, transaction operations, reports, and CSV export |
+| `database.py` | SQLite schema and connection wrapper |
+| `tests/` | Automated tests |

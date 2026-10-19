@@ -13,8 +13,13 @@ env/
 # Local application data
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
+*.sqlite-journal
+*.sqlite3-journal
+.streamlit/secrets.toml
 
 # Generated exports
 expenses_*.csv

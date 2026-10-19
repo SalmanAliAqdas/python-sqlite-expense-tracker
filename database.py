@@ -53,6 +53,20 @@ class Database:
                 )
                 """
             )
+            # Income is additive: the existing expenses schema and rows stay intact.
+            self.connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS incomes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    amount_paisa INTEGER NOT NULL CHECK (amount_paisa > 0),
+                    category_id INTEGER NOT NULL,
+                    description TEXT NOT NULL,
+                    income_date TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (category_id) REFERENCES categories(id)
+                )
+                """
+            )
             self.connection.executemany(
                 "INSERT OR IGNORE INTO categories (name) VALUES (?)",
                 ((name,) for name in DEFAULT_CATEGORIES),

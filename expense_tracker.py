@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+from io import StringIO
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
@@ -17,6 +18,12 @@ SELECT e.id, e.expense_date AS date, c.name AS category,
 FROM expenses e
 JOIN categories c ON c.id = e.category_id
 """
+INCOME_SELECT = """
+SELECT i.id, i.income_date AS date, c.name AS category,
+       i.description, i.amount_paisa
+FROM incomes i
+JOIN categories c ON c.id = i.category_id
+"""
 
 
 def amount_to_paisa(value: str | int | Decimal) -> int:
@@ -27,7 +34,10 @@ def amount_to_paisa(value: str | int | Decimal) -> int:
         raise ValueError("Amount must be a valid number.") from error
     if not amount.is_finite() or amount <= 0:
         raise ValueError("Amount must be greater than zero.")
-    return int(amount * 100)
+    paisa = int(amount * 100)
+    if paisa > 9_223_372_036_854_775_807:
+        raise ValueError("Amount is too large.")
+    return paisa
 
 
 def format_pkr(amount_paisa: int) -> str:
@@ -84,12 +94,21 @@ class ExpenseTracker:
     def add_expense(
         self, amount: str | int | Decimal, category: str, description: str, expense_date: str | None = None
     ) -> int:
+        return self._add_record("expenses", "expense_date", amount, category, description, expense_date)
+
+    def _add_record(
+        self, table: str, date_column: str, amount: str | int | Decimal,
+        category: str, description: str, when: str | None,
+    ) -> int:
+        # Table and column names come only from the two fixed calls below.
         cleaned_description = description.strip()
         if not cleaned_description:
             raise ValueError("Description cannot be empty.")
+        amount_paisa = amount_to_paisa(amount)
+        valid_date = validate_date(when)
         cursor = self.db.execute(
-            "INSERT INTO expenses (amount_paisa, category_id, description, expense_date) VALUES (?, ?, ?, ?)",
-            (amount_to_paisa(amount), self._category_id(category), cleaned_description, validate_date(expense_date)),
+            f"INSERT INTO {table} (amount_paisa, category_id, description, {date_column}) VALUES (?, ?, ?, ?)",
+            (amount_paisa, self._category_id(category), cleaned_description, valid_date),
         )
         return int(cursor.lastrowid)
 
@@ -109,24 +128,106 @@ class ExpenseTracker:
         description: str | None = None,
         expense_date: str | None = None,
     ) -> bool:
-        existing = self.get_expense(expense_id)
+        return self._edit_record("expenses", "expense_date", self.get_expense(expense_id),
+                                 expense_id, amount, category, description, expense_date)
+
+    def _edit_record(
+        self, table: str, date_column: str, existing: dict[str, Any] | None,
+        record_id: int, amount: str | int | Decimal | None,
+        category: str | None, description: str | None, when: str | None,
+    ) -> bool:
         if existing is None:
             return False
         amount_paisa = existing["amount_paisa"] if amount is None else amount_to_paisa(amount)
-        category_id = self._category_id(existing["category"] if category is None else category)
         new_description = existing["description"] if description is None else description.strip()
         if not new_description:
             raise ValueError("Description cannot be empty.")
-        new_date = existing["date"] if expense_date is None else validate_date(expense_date)
+        new_date = existing["date"] if when is None else validate_date(when)
+        category_id = self._category_id(existing["category"] if category is None else category)
         self.db.execute(
-            "UPDATE expenses SET amount_paisa = ?, category_id = ?, description = ?, expense_date = ? WHERE id = ?",
-            (amount_paisa, category_id, new_description, new_date, expense_id),
+            f"UPDATE {table} SET amount_paisa = ?, category_id = ?, description = ?, {date_column} = ? WHERE id = ?",
+            (amount_paisa, category_id, new_description, new_date, record_id),
         )
         return True
 
     def delete_expense(self, expense_id: int) -> bool:
         cursor = self.db.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
         return cursor.rowcount > 0
+
+    def add_income(
+        self, amount: str | int | Decimal, category: str, description: str,
+        income_date: str | None = None,
+    ) -> int:
+        return self._add_record("incomes", "income_date", amount, category, description, income_date)
+
+    def get_income(self, income_id: int) -> dict[str, Any] | None:
+        row = self.db.fetchone(INCOME_SELECT + " WHERE i.id = ?", (income_id,))
+        return dict(row) if row else None
+
+    def edit_income(
+        self, income_id: int, amount: str | int | Decimal | None = None,
+        category: str | None = None, description: str | None = None,
+        income_date: str | None = None,
+    ) -> bool:
+        return self._edit_record("incomes", "income_date", self.get_income(income_id),
+                                 income_id, amount, category, description, income_date)
+
+    def delete_income(self, income_id: int) -> bool:
+        cursor = self.db.execute("DELETE FROM incomes WHERE id = ?", (income_id,))
+        return cursor.rowcount > 0
+
+    def list_transactions(
+        self, category: str | None = None, start_date: str | None = None,
+        end_date: str | None = None, kind: str | None = None,
+    ) -> list[dict[str, Any]]:
+        if kind not in (None, "Income", "Expense"):
+            raise ValueError("Invalid transaction type.")
+        start = validate_date(start_date) if start_date else None
+        end = validate_date(end_date) if end_date else None
+        if start and end and start > end:
+            raise ValueError("Start date cannot be after end date.")
+        query = """SELECT * FROM (
+            SELECT e.id, e.expense_date AS date, c.name AS category,
+                   e.description, e.amount_paisa, 'Expense' AS kind
+            FROM expenses e JOIN categories c ON c.id = e.category_id
+            UNION ALL
+            SELECT i.id, i.income_date AS date, c.name AS category,
+                   i.description, i.amount_paisa, 'Income' AS kind
+            FROM incomes i JOIN categories c ON c.id = i.category_id
+        ) WHERE 1 = 1"""
+        parameters: list[Any] = []
+        if category:
+            query += " AND category = ? COLLATE NOCASE"
+            parameters.append(category.strip())
+        if start:
+            query += " AND date >= ?"
+            parameters.append(start)
+        if end:
+            query += " AND date <= ?"
+            parameters.append(end)
+        if kind:
+            query += " AND kind = ?"
+            parameters.append(kind)
+        query += " ORDER BY date DESC, id DESC, kind"
+        return [dict(row) for row in self.db.fetchall(query, parameters)]
+
+    def transaction_totals(self) -> dict[str, int]:
+        row = self.db.fetchone("""SELECT
+            (SELECT COALESCE(SUM(amount_paisa), 0) FROM incomes) AS income,
+            (SELECT COALESCE(SUM(amount_paisa), 0) FROM expenses) AS expenses""")
+        income = int(row["income"])
+        expenses = int(row["expenses"])
+        return {"income_paisa": income, "expense_paisa": expenses,
+                "balance_paisa": income - expenses}
+
+    def transactions_csv(self, transactions: list[dict[str, Any]] | None = None) -> str:
+        output = StringIO(newline="")
+        writer = csv.writer(output)
+        writer.writerow(["Type", "ID", "Date", "Category", "Description", "Amount (PKR)"])
+        for item in self.list_transactions() if transactions is None else transactions:
+            writer.writerow([item["kind"], item["id"], item["date"], item["category"],
+                             item["description"], f'{Decimal(item["amount_paisa"]) / 100:.2f}'])
+        return output.getvalue()
 
     def search_expenses(
         self, description: str | None = None, category: str | None = None,

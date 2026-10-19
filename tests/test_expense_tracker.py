@@ -1,4 +1,5 @@
 import csv
+import sqlite3
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -84,6 +85,63 @@ class ExpenseTrackerTests(unittest.TestCase):
             rows = list(csv.reader(handle))
         self.assertEqual(rows[0], ["ID", "Date", "Category", "Description", "Amount (PKR)"])
         self.assertEqual(rows[1][-1], "10.00")
+
+    def test_income_crud_and_balance(self):
+        income_id = self.tracker.add_income("1000.10", "Salary", "Pay", "2026-10-01")
+        expense_id = self.tracker.add_expense("200.20", "Food", "Lunch", "2026-10-02")
+        self.assertEqual(self.tracker.get_income(income_id)["amount_paisa"], 100010)
+        self.assertEqual(self.tracker.transaction_totals(), {
+            "income_paisa": 100010, "expense_paisa": 20020, "balance_paisa": 79990,
+        })
+        self.assertTrue(self.tracker.edit_income(income_id, "1200.30", "Business", "Project", "2026-10-03"))
+        self.assertEqual(self.tracker.get_income(income_id)["category"], "Business")
+        self.assertEqual(self.tracker.get_income(income_id)["amount_paisa"], 120030)
+        self.assertTrue(self.tracker.delete_income(income_id))
+        self.assertFalse(self.tracker.delete_income(income_id))
+        self.assertEqual(self.tracker.transaction_totals()["balance_paisa"], -20020)
+        self.assertTrue(self.tracker.delete_expense(expense_id))
+
+    def test_transaction_filters_and_csv(self):
+        self.tracker.add_income("500", "Business", "Invoice", "2026-09-01")
+        self.tracker.add_expense("10.25", "Food", "Snack", "2026-10-01")
+        self.tracker.add_expense("20", "Food", "Lunch", "2026-11-01")
+        filtered = self.tracker.list_transactions("food", "2026-10-01", "2026-10-31", "Expense")
+        self.assertEqual([row["description"] for row in filtered], ["Snack"])
+        rows = list(csv.reader(StringIO(self.tracker.transactions_csv(filtered))))
+        self.assertEqual(rows[0], ["Type", "ID", "Date", "Category", "Description", "Amount (PKR)"])
+        self.assertEqual(rows[1], ["Expense", "1", "2026-10-01", "Food", "Snack", "10.25"])
+        self.assertEqual(len(rows), 2)
+        with self.assertRaises(ValueError):
+            self.tracker.list_transactions(start_date="2026-12-01", end_date="2026-01-01")
+        with self.assertRaises(ValueError):
+            self.tracker.list_transactions(kind="Unknown")
+
+    def test_invalid_income_and_database_error(self):
+        for amount in ("0", "-2", "nan", "999999999999999999999999999"):
+            with self.subTest(amount=amount), self.assertRaises(ValueError):
+                self.tracker.add_income(amount, "Salary", "Invalid")
+        with self.assertRaises(ValueError):
+            self.tracker.add_income("10", "Salary", "Valid", "2026-02-30")
+        with self.assertRaises(ValueError):
+            self.tracker.add_income("10", "Salary", " ")
+        self.assertEqual(self.tracker.list_transactions(), [])
+        self.tracker.close()
+        with self.assertRaises(sqlite3.ProgrammingError):
+            self.tracker.list_transactions()
+
+
+class DemoIsolationTests(unittest.TestCase):
+    def test_in_memory_trackers_are_isolated(self):
+        from streamlit_app import seed_demo
+
+        with ExpenseTracker(":memory:") as visitor_one, ExpenseTracker(":memory:") as visitor_two:
+            seed_demo(visitor_one)
+            seed_demo(visitor_two)
+            original_count = len(visitor_two.list_transactions())
+            visitor_one.add_expense("77", "Food", "Only visitor one")
+            self.assertEqual(len(visitor_two.list_transactions()), original_count)
+            self.assertFalse(any(row["description"] == "Only visitor one"
+                                 for row in visitor_two.list_transactions()))
 
 
 class ViewAllExpensesTests(unittest.TestCase):
