@@ -1,0 +1,131 @@
+/* Streamlit container keys are documented CSS hooks. Keep widgets native. */
+:root {
+    --ink: #1c293b;
+    --muted: #738193;
+    --line: #e7ecf1;
+    --green: #158567;
+    --coral: #cc6155;
+    --teal: #278b9a;
+}
+
+.st-key-workspace {
+    max-width: 1240px;
+    margin: -1.6rem auto 0;
+    padding-bottom: 2rem;
+}
+
+.st-key-workspace h1 {
+    color: var(--ink);
+    font-size: clamp(1.6rem, 2.3vw, 2rem);
+    font-weight: 720;
+    letter-spacing: -.04em;
+    line-height: 1.3;
+    padding: .05rem 0 .4rem;
+}
+
+.st-key-workspace h2, .st-key-workspace h3 {
+    color: var(--ink);
+    font-size: 1.06rem;
+    font-weight: 650;
+    letter-spacing: -.025em;
+    padding: 0 0 .35rem;
+}
+
+.st-key-workspace p, .st-key-sidebar_content p {font-size: .89rem;}
+.st-key-workspace button {border-radius: 9px; font-weight: 550;}
+.st-key-workspace input, .st-key-workspace textarea {font-size: .9rem;}
+
+.page-eyebrow {color: var(--muted); font-size: .66rem; letter-spacing: .13em;
+    font-weight: 650; margin-bottom: .55rem; text-transform: uppercase;}
+.page-subtitle {color: #69788b; font-size: .9rem; margin: .1rem 0 .65rem;}
+.reporting-period {display: flex; flex-direction: column; gap: 3px;
+    align-items: flex-end; color: var(--muted); font-size: .73rem; padding-top: .25rem;}
+.period-label {font-size: .61rem; letter-spacing: .1em; font-weight: 650;}
+.reporting-period strong {font-size: .91rem; color: var(--ink); font-weight: 600;}
+
+.kpi-grid {display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;
+    margin: 5px 0 8px;}
+.kpi-card {background: white; border: 1px solid var(--line); border-radius: 14px;
+    padding: 19px 20px 17px; min-width: 0; box-shadow: 0 3px 14px #20334d04;
+    transition: box-shadow .18s ease, border-color .18s ease;}
+.kpi-card:hover {border-color: #d3dfe6; box-shadow: 0 5px 20px #20334d09;}
+.kpi-top {display: flex; align-items: center; justify-content: space-between;
+    gap: 6px; color: #667589; font-size: .77rem; font-weight: 550;}
+.kpi-icon {display: inline-flex; align-items: center; justify-content: center;
+    width: 29px; height: 29px; border-radius: 8px; background: #eef4f7;
+    color: var(--teal); font-size: 1rem; flex-shrink: 0;}
+.kpi-value {color: var(--ink); font-size: clamp(1.35rem, 1.9vw, 1.8rem);
+    font-weight: 680; letter-spacing: -.045em; line-height: 1.45;
+    margin: 9px 0 8px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums;}
+.kpi-currency {font-size: .65rem; letter-spacing: .015em; font-weight: 550;
+    vertical-align: .2em; color: #718094;}
+.kpi-note {color: #7b8797; font-size: .69rem;}
+.income .kpi-value, .positive .kpi-value {color: var(--green);}
+.income .kpi-icon, .positive .kpi-icon {color: var(--green); background: #eaf6f0;}
+.expense .kpi-value, .negative .kpi-value {color: var(--coral);}
+.expense .kpi-icon, .negative .kpi-icon {color: var(--coral); background: #fff0ed;}
+
+.st-key-chart_spending, .st-key-chart_categories, .st-key-chart_comparison,
+.st-key-analytics_spending, .st-key-analytics_categories, .st-key-analytics_comparison,
+.st-key-recent_transactions, .st-key-transaction_table, .st-key-add_panel,
+.st-key-filters, .st-key-monthly_table, .st-key-settings_info, .st-key-demo_controls {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 3px 14px #20334d04;
+}
+
+.chart-note {color: var(--muted); font-size: .74rem; margin: -.1rem 0 .4rem;}
+.empty-state {text-align: center; padding: 3.6rem 1rem; color: #7a8797;}
+.empty-icon {display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 12px; background: #edf5f6;
+    color: var(--teal); font-size: 1.3rem; margin-bottom: 12px;}
+.empty-state strong {display: block; color: #405166; font-weight: 600; font-size: .91rem;}
+.empty-state p {font-size: .78rem; margin-top: 6px;}
+.st-key-delete_control button:enabled {background: #fff1ee; border-color: #edc2ba; color: #b64b40;}
+.st-key-delete_control button:enabled:hover {background: #ffe7e1; border-color: #dca79e;}
+
+.st-key-sidebar_content {padding-top: .2rem;}
+.brand {display: flex; align-items: center; gap: 10px; margin: 0 0 31px;}
+.brand-icon {display: inline-flex; align-items: center; justify-content: center;
+    background: var(--green); color: white; width: 36px; height: 36px; border-radius: 10px;}
+.brand-name {color: var(--ink); font-size: .98rem; font-weight: 700; letter-spacing: -.035em;}
+.brand-caption {color: var(--muted); font-size: .68rem; margin-top: 1px;}
+.nav-label {color: #8792a1; font-size: .61rem; letter-spacing: .13em;
+    font-weight: 650; margin: 0 0 8px 9px;}
+.st-key-navigation {gap: .2rem;}
+.st-key-navigation button {justify-content: flex-start; border-color: transparent;
+    background: transparent; color: #657386; font-size: .85rem;
+    min-height: 2.65rem; border-radius: 9px; padding-left: .8rem;}
+.st-key-navigation button:hover {background: #e5ecef; color: #273a4d; border-color: transparent;}
+.st-key-navigation button > div {flex-grow: 0; width: auto;}
+.st-key-nav_active button, .st-key-nav_active button:hover {
+    background: #e0f0e9; color: #116e54; font-weight: 650; border-color: #d4e8de;}
+.sidebar-session {background: #ffffffa6; border: 1px solid #e1e7ec; border-radius: 11px;
+    padding: 14px; margin-top: 28px; color: #6d7a8b; font-size: .74rem; line-height: 1.65;}
+.session-title {color: #3c5063; font-size: .78rem; font-weight: 600; margin-bottom: 4px;}
+.session-dot {display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); vertical-align: middle; margin-right: 5px;}
+.sidebar-footnote {color: #8a96a5; font-size: .65rem; padding: 15px 6px;}
+.setting-row {display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    padding: 14px 0; border-bottom: 1px solid var(--line); font-size: .86rem; color: #667589;}
+.setting-row:last-child {border-bottom: none;}
+.setting-row strong {color: #2c4054; font-weight: 550;}
+
+@media (min-width: 701px) and (max-width: 1050px) {
+    .kpi-grid {grid-template-columns: repeat(2, minmax(0, 1fr));}
+    .kpi-value {font-size: 1.65rem;}
+}
+@media (max-width: 700px) {
+    .st-key-workspace {margin-top: -1rem;}
+    .kpi-grid {grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;}
+    .kpi-card {padding: 14px;}
+    .kpi-top {font-size: .72rem;}
+    .kpi-icon {width: 24px; height: 24px; font-size: .9rem;}
+    .kpi-value {font-size: 1.3rem; margin-top: 10px;}
+    .kpi-note {font-size: .63rem;}
+    .reporting-period {display: grid; grid-template-columns: auto 1fr;
+        align-items: center; gap: 4px 10px; margin-bottom: .25rem;}
+    .reporting-period > span:last-child {grid-column: 1 / -1;}
+}
+@media (max-width: 359px) {.kpi-grid {grid-template-columns: minmax(0, 1fr);}}
+@media (prefers-reduced-motion: reduce) {.kpi-card {transition: none;}}

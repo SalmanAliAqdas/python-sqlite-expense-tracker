@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from threading import RLock
 from typing import Any, Iterable
 
 
@@ -23,15 +24,16 @@ DEFAULT_CATEGORIES = (
 class Database:
     """Small database wrapper that owns the schema and SQL operations."""
 
-    def __init__(self, database_path: str | Path = "expense_tracker.db") -> None:
+    def __init__(self, database_path: str | Path = "expense_tracker.db", *, check_same_thread: bool = True) -> None:
         self.path = str(database_path)
-        self.connection = sqlite3.connect(self.path)
+        self._lock = RLock()
+        self.connection = sqlite3.connect(self.path, check_same_thread=check_same_thread)
         self.connection.row_factory = sqlite3.Row
         self.connection.execute("PRAGMA foreign_keys = ON")
         self._create_tables()
 
     def _create_tables(self) -> None:
-        with self.connection:
+        with self._lock, self.connection:
             self.connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS categories (
@@ -75,21 +77,24 @@ class Database:
     def execute(
         self, query: str, parameters: Iterable[Any] = ()
     ) -> sqlite3.Cursor:
-        with self.connection:
+        with self._lock, self.connection:
             return self.connection.execute(query, tuple(parameters))
 
     def fetchone(
         self, query: str, parameters: Iterable[Any] = ()
     ) -> sqlite3.Row | None:
-        return self.connection.execute(query, tuple(parameters)).fetchone()
+        with self._lock:
+            return self.connection.execute(query, tuple(parameters)).fetchone()
 
     def fetchall(
         self, query: str, parameters: Iterable[Any] = ()
     ) -> list[sqlite3.Row]:
-        return self.connection.execute(query, tuple(parameters)).fetchall()
+        with self._lock:
+            return self.connection.execute(query, tuple(parameters)).fetchall()
 
     def close(self) -> None:
-        self.connection.close()
+        with self._lock:
+            self.connection.close()
 
     def __enter__(self) -> "Database":
         return self

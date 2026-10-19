@@ -6,16 +6,21 @@ A Python expense tracker with a Streamlit dashboard and an independent terminal 
 
 ## Features
 
-- Dashboard with income, expenses, balance, monthly spending, category breakdown, and recent transactions
-- Interactive spending charts and a responsive sidebar interface
+- Dashboard with income, expenses, balance, savings rate, and recent transactions
+- Light fintech interface with responsive summary cards and sidebar navigation
+- Interactive monthly spending, category, and income-versus-expenses charts
+- Analytics with reporting-period filters and a monthly cash-flow breakdown
 - Add, edit, and delete income and expenses with dates, categories, and descriptions
 - Filter transaction history by date, category, and type; download filtered CSV data
 - Existing terminal application remains available for expense management and reports
 - Isolated fictional demo data for each web visitor by default
+- Confirmed demo reset in Settings; confirmation before transaction deletion
 
 ## Technology stack
 
-Python 3.10+, Streamlit, and SQLite through Python's standard `sqlite3` module. The application uses Python's `decimal`, `csv`, and `unittest` modules. Streamlit provides the charts; no separate charting package is required.
+Python 3.11+, Streamlit, Altair, and SQLite through Python's standard `sqlite3` module. The application uses Python's `decimal`, `csv`, and `unittest` modules. Charts use Altair, which is also included in Streamlit's dependencies. The standalone terminal application also supports Python 3.10.
+
+Savings rate is `(income - expenses) / income × 100`. When income is zero, the dashboard displays an explanation instead of a percentage. Totals use integer paisa; chart coordinates are converted to PKR for presentation only.
 
 ## Installation
 
@@ -57,7 +62,7 @@ The terminal interface continues to manage expenses in the same local SQLite dat
 
 1. Review the repository and confirm that no private SQLite files or exports are tracked in Git. The `.gitignore` excludes local databases and generated exports.
 2. Publish the source repository to GitHub.
-3. In Streamlit Community Cloud, create an app from that repository and select **`streamlit_app.py`** as the main file.
+3. In Streamlit Community Cloud, create an app from that repository, select **`streamlit_app.py`** as the main file, and use Python 3.11 or later.
 4. Leave `EXPENSE_TRACKER_MODE` unset so the public app starts in demo mode.
 5. Add the deployed URL to the live demo link above.
 
@@ -81,6 +86,9 @@ Tests use temporary files and in-memory databases. They do not access the local 
 | File | Purpose |
 | --- | --- |
 | `streamlit_app.py` | Web entry point and session-isolated demo |
+| `dashboard_ui.py` | Dashboard presentation, savings rate, and chart builders |
+| `assets/styles.css` | Scoped styles using native container keys |
+| `.streamlit/config.toml` | Default light theme |
 | `main.py` | Existing terminal interface |
 | `expense_tracker.py` | Validation, transaction operations, reports, and CSV export |
 | `database.py` | SQLite schema and connection wrapper |

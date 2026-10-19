@@ -55,8 +55,8 @@ def validate_date(value: str | None) -> str:
 class ExpenseTracker:
     """Application service used by both the CLI and automated tests."""
 
-    def __init__(self, database_path: str | Path = "expense_tracker.db") -> None:
-        self.db = Database(database_path)
+    def __init__(self, database_path: str | Path = "expense_tracker.db", *, check_same_thread: bool = True) -> None:
+        self.db = Database(database_path, check_same_thread=check_same_thread)
 
     def close(self) -> None:
         self.db.close()
